@@ -1,6 +1,6 @@
 # convotokens
 
-Claude Code plugin. `/convotokens` prints real token counts for the current
+Claude Code plugin. `/convotokens:get-tokens` prints real token counts for the current
 chat, parsed from your own local transcript (`~/.claude/projects/.../<session>.jsonl`).
 No network calls, no dollar estimates.
 
@@ -36,7 +36,7 @@ Fix: dedupe by `message.id`, keep one `usage` per id, union the
 coldstart-tool-use check across every fragment of that id (the tool_use block
 and the fragment whose usage gets kept aren't necessarily the same line). This
 logic lives in one place, `scripts/lib/compute-usage.mjs`, shared by both the
-`/convotokens` command and the statusLine script below — the dedupe fix can't
+`/convotokens:get-tokens` command and the statusLine script below — the dedupe fix can't
 regress in one surface without regressing in the other. Re-validated post-fix
 against a `jq` group-by-`message.id` sum on a live (still-growing) transcript
 — matched within the drift expected from the file growing between the two
@@ -76,7 +76,7 @@ session file continues — Claude Code's own docs confirm the old conversation
 `SessionStart`/`clear` record is written to the file, even though a
 `SessionStart` hook does fire with `source: "clear"` at that moment.
 
-**Consequence:** `/convotokens` sums the *entire* transcript file, which is
+**Consequence:** `/convotokens:get-tokens` sums the *entire* transcript file, which is
 "tokens used across this session," not strictly "tokens since your last
 `/clear`." If you've cleared mid-session, the total includes pre-clear turns.
 
@@ -89,7 +89,7 @@ hook plumbing.
 ## Attribution caveat (coldstart share)
 
 If you use [coldstart](https://github.com/AkashGoenka/coldstart)'s MCP tools
-in a session, `/convotokens` calls out coldstart's share of the total —
+in a session, `/convotokens:get-tokens` calls out coldstart's share of the total —
 its tool identity is a clean prefix match (`mcp__coldstart__find`,
 `mcp__coldstart__gs`, no separate server-identity field needed). The
 remaining approximation: an assistant turn's *entire* usage is attributed to
@@ -100,15 +100,15 @@ hidden. It's a nice-to-have side feature, not the point of this plugin.
 
 ## Two ways to see your usage
 
-### 1. `/convotokens` — on-demand, in the chat
+### 1. `/convotokens:get-tokens` — on-demand, in the chat
 
 Prints a plain-text table in the chat. Nothing else happens by default —
 earlier versions auto-opened an HTML report in a new browser tab on *every*
 call, which was bad UX (a fresh tab per invocation, no reused tab). That's
-gone now: run `/convotokens --open` if you explicitly want the HTML report
+gone now: run `/convotokens:get-tokens --open` if you explicitly want the HTML report
 (bar breakdown, per-model table, coldstart share) written to
 `$TMPDIR/convotokens-report.html` and opened in your OS default browser, or
-`/convotokens --json` for machine-readable output.
+`/convotokens:get-tokens --json` for machine-readable output.
 
 ### 2. statusLine — passive, CLI only
 
@@ -149,7 +149,7 @@ variable, not available to statusLine's config.)
 claude --plugin-dir /path/to/convotokens
 ```
 
-Then `/convotokens` inside that session. `/reload-plugins` picks up edits
+Then `/convotokens:get-tokens` inside that session. `/reload-plugins` picks up edits
 without restarting.
 
 To test the marketplace-install flow (e.g. via VS Code's `/plugins` UI),
@@ -159,7 +159,16 @@ plugin from it.
 
 ## Not yet done
 
-- Not yet run end-to-end via `--plugin-dir` in a fresh clone of this repo
-  (only validated inside the original prototype location before migration).
+- Core dedupe/sum logic re-validated directly against a real, live, multi-turn
+  transcript from this repo location (not just the original prototype
+  location). `claude plugin validate .` passes clean, and `claude --plugin-dir .`
+  resolves `/convotokens:get-tokens` correctly (registered, no "Unknown
+  command" error).
+- **Not yet done**: a real interactive smoke test (`claude --plugin-dir .`,
+  then typing `/convotokens:get-tokens` in the TUI). Headless `claude -p`
+  one-shot invocations don't have a persisted transcript file for their own
+  ephemeral session at the moment the command's bash line runs, so `-p` can't
+  exercise this plugin's core path — do this check in a real interactive
+  session before submitting.
 - No automated tests.
 - Codex support (see Scope above) — not started.

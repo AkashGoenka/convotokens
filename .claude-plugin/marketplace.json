@@ -3,6 +3,7 @@
   "owner": {
     "name": "Akash Goenka"
   },
+  "description": "Real token counts for your current chat, parsed from your own local session transcript. No network calls, no dollar estimates.",
   "plugins": [
     {
       "name": "convotokens",
