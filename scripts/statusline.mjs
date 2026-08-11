@@ -14,7 +14,6 @@ import { findTranscript, computeUsage } from "./lib/compute-usage.mjs";
 
 const ESC = "";
 const CYAN = `${ESC}[36m`;
-const MAGENTA = `${ESC}[35m`;
 const RESET = `${ESC}[0m`;
 
 function readStdin() {
@@ -54,12 +53,7 @@ async function main() {
   const fmt = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
   const t = result.overall;
   const cacheReadPct = Math.round((t.cache_read_input_tokens / t.total) * 100);
-  let line = `${CYAN}●${RESET} ${fmt(t.total)} tok this session (${cacheReadPct}% cache read)`;
-
-  if (result.coldstart.total > 0) {
-    const pct = ((result.coldstart.total / t.total) * 100).toFixed(0);
-    line += `  ${MAGENTA}coldstart ${pct}%${RESET}`;
-  }
+  const line = `${CYAN}●${RESET} ${fmt(t.total)} tok this session (${cacheReadPct}% cache read)`;
 
   process.stdout.write(line);
 }

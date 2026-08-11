@@ -47,10 +47,8 @@ export function totalOf(t) {
   return t.input_tokens + t.output_tokens + t.cache_read_input_tokens + t.cache_creation_input_tokens;
 }
 
-export const MCP_COLDSTART_PREFIX = "mcp__coldstart__";
-
 export async function computeUsage(transcriptPath) {
-  const messages = new Map(); // message.id -> { usage, model, usedColdstart }
+  const messages = new Map(); // message.id -> { usage, model }
   let malformedLines = 0;
   let totalLines = 0;
   let rawAssistantLines = 0;
@@ -74,28 +72,18 @@ export async function computeUsage(transcriptPath) {
     if (!usage || typeof usage !== "object" || !id) continue;
     rawAssistantLines++;
 
-    const content = Array.isArray(rec.message?.content) ? rec.message.content : [];
-    const usedColdstart = content.some(
-      (b) => b && b.type === "tool_use" && typeof b.name === "string" && b.name.startsWith(MCP_COLDSTART_PREFIX),
-    );
-
-    const existing = messages.get(id);
-    if (!existing) {
-      messages.set(id, { usage, model: rec.message?.model || "unknown", usedColdstart });
-    } else if (usedColdstart) {
-      existing.usedColdstart = true;
+    if (!messages.has(id)) {
+      messages.set(id, { usage, model: rec.message?.model || "unknown" });
     }
   }
 
   const overall = emptyTotals();
-  const coldstart = emptyTotals();
   const byModel = new Map();
 
-  for (const { usage, model, usedColdstart } of messages.values()) {
+  for (const { usage, model } of messages.values()) {
     addUsage(overall, usage);
     if (!byModel.has(model)) byModel.set(model, emptyTotals());
     addUsage(byModel.get(model), usage);
-    if (usedColdstart) addUsage(coldstart, usage);
   }
 
   return {
@@ -106,6 +94,5 @@ export async function computeUsage(transcriptPath) {
     malformedLines,
     overall: { ...overall, total: totalOf(overall) },
     byModel: Object.fromEntries([...byModel.entries()].map(([m, t]) => [m, { ...t, total: totalOf(t) }])),
-    coldstart: { ...coldstart, total: totalOf(coldstart) },
   };
 }

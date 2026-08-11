@@ -31,7 +31,7 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
-/** Best-effort open in the OS default browser. Never throws — mirrors coldstart's own kb-view convention. */
+/** Best-effort open in the OS default browser. Never throws. */
 function openInBrowser(file) {
   const cmd =
     process.platform === "darwin" ? { bin: "open", args: [file] }
@@ -80,14 +80,6 @@ function renderHtml(result) {
       }</tbody></table>`
     : "";
 
-  const coldstartBlock = result.coldstart.total > 0
-    ? `<div class="coldstart">
-        <div class="coldstart-label">coldstart's share</div>
-        <div class="coldstart-value">${fmt(result.coldstart.total)} tokens <span class="muted">(${((result.coldstart.total / total) * 100).toFixed(1)}% of session total)</span></div>
-        <div class="coldstart-note muted">usage of assistant turns that called an mcp__coldstart__* tool</div>
-      </div>`
-    : "";
-
   const warning = result.malformedLines > 0
     ? `<div class="warning">${result.malformedLines} malformed line(s) skipped out of ${result.totalLines}.</div>`
     : "";
@@ -123,10 +115,6 @@ function renderHtml(result) {
   .muted { color: var(--muted); font-size: 0.8rem; }
   .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.5rem; }
   .model-table { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
-  .coldstart { margin-top: 1.5rem; padding: 1rem; background: var(--card); border: 1px solid var(--border); border-radius: 10px; }
-  .coldstart-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.2rem; }
-  .coldstart-value { font-size: 1.1rem; font-weight: 600; }
-  .coldstart-note { margin-top: 0.25rem; }
   .warning { margin-top: 1rem; font-size: 0.8rem; color: #b45309; }
   footer { margin-top: 2rem; font-size: 0.75rem; color: var(--muted); }
 </style>
@@ -140,7 +128,6 @@ function renderHtml(result) {
     <div class="bar">${barSegments}</div>
     <table>${legendRows}</table>
     ${modelRows}
-    ${coldstartBlock}
     ${warning}
     <footer>Generated locally from your own transcript. No network calls.${
       result.rawAssistantLines !== result.uniqueAssistantMessages
@@ -171,8 +158,7 @@ async function main() {
   // API turn, not a block) but only a fragment of message.content. Summing
   // every line overcounts by however many fragments each turn produced —
   // confirmed on a real transcript: 224 assistant lines, 106 unique message
-  // ids, naive sum 1.6x too high. computeUsage() dedupes by message.id (same
-  // fix as this repo's own arm_totals_27q_2026-06-13.py benchmarking script).
+  // ids, naive sum 1.6x too high. computeUsage() dedupes by message.id.
   const result = await computeUsage(transcriptPath);
   const { byModel } = result;
 
@@ -213,11 +199,6 @@ async function main() {
     }
   }
 
-  if (result.coldstart.total > 0) {
-    const pct = ((result.coldstart.total / result.overall.total) * 100).toFixed(1);
-    console.log(`\ncoldstart's share: ${fmt(result.coldstart.total)} tokens (${pct}% of session total)`);
-    console.log("  (usage of assistant turns that called an mcp__coldstart__* tool)");
-  }
 }
 
 main().catch((err) => {

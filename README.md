@@ -32,9 +32,7 @@ turn, not a block. Measured: 254 raw assistant lines, only 120 unique
 `message.id` values — summing every line overcounts by ~1.5-2x depending on
 how fragmented that session's responses were.
 
-Fix: dedupe by `message.id`, keep one `usage` per id, union the
-coldstart-tool-use check across every fragment of that id (the tool_use block
-and the fragment whose usage gets kept aren't necessarily the same line). This
+Fix: dedupe by `message.id`, keeping the first `usage` seen per id. This
 logic lives in one place, `scripts/lib/compute-usage.mjs`, shared by both the
 `/convotokens:get-tokens` command and the statusLine script below — the dedupe fix can't
 regress in one surface without regressing in the other. Re-validated post-fix
@@ -86,18 +84,6 @@ keyed by session id; the command reads from that offset forward. Not built —
 deferred until it's clear (no pun intended) this precision is worth the extra
 hook plumbing.
 
-## Attribution caveat (coldstart share)
-
-If you use [coldstart](https://github.com/AkashGoenka/coldstart)'s MCP tools
-in a session, `/convotokens:get-tokens` calls out coldstart's share of the total —
-its tool identity is a clean prefix match (`mcp__coldstart__find`,
-`mcp__coldstart__gs`, no separate server-identity field needed). The
-remaining approximation: an assistant turn's *entire* usage is attributed to
-coldstart if that turn contains any `mcp__coldstart__*` tool call, even if
-the same turn also called other tools or wrote substantial unrelated text.
-This is turn-level, not call-level, apportionment — disclosed here, not
-hidden. It's a nice-to-have side feature, not the point of this plugin.
-
 ## Two ways to see your usage
 
 ### 1. `/convotokens:get-tokens` — on-demand, in the chat
@@ -106,7 +92,7 @@ Prints a plain-text table in the chat. Nothing else happens by default —
 earlier versions auto-opened an HTML report in a new browser tab on *every*
 call, which was bad UX (a fresh tab per invocation, no reused tab). That's
 gone now: run `/convotokens:get-tokens --open` if you explicitly want the HTML report
-(bar breakdown, per-model table, coldstart share) written to
+(bar breakdown, per-model table) written to
 `$TMPDIR/convotokens-report.html` and opened in your OS default browser, or
 `/convotokens:get-tokens --json` for machine-readable output.
 
@@ -119,7 +105,7 @@ it on stdin (`session_id`, `workspace.current_dir`), reuses the same
 deduped-by-`message.id` engine, and prints one line back:
 
 ```
-● 51.0k tok this session (44% cache read)  coldstart 12%
+● 51.0k tok this session (44% cache read)
 ```
 
 **Confirmed empirically, not just from docs: this does NOT render inside the
