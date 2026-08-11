@@ -6,14 +6,13 @@ No network calls, no dollar estimates.
 
 ## Status: early, unpublished to a marketplace yet
 
-## Scope: Claude Code today, Codex is a future direction
+## Scope: Claude Code and Codex
 
-v1 targets Claude Code only. Codex is a real candidate for later — the name
-was chosen to be provider-neutral for exactly that reason — but it's a
-materially bigger lift than it looks: different transcript format, different
-on-disk location, and Codex doesn't have Claude Code-style slash-command
-plugins at all (its equivalent extension surface is repo-scoped skills). Not
-started; do not assume Codex works.
+Claude Code is supported through the plugin command and status line. Codex is
+supported through `scripts/codex-usage.mjs`, which reads local Codex rollout
+transcripts and their cumulative `token_count` snapshots. Run it from the
+current workspace with `node scripts/codex-usage.mjs --cwd "$PWD"`, or pass
+`--session <id>` for a specific chat. Use `--json` for machine-readable output.
 
 ## Fixed bug: naive per-line summing overcounted by ~1.5-2x
 
