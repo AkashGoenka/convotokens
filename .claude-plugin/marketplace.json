@@ -1,0 +1,13 @@
+{
+  "name": "convotokens",
+  "owner": {
+    "name": "Akash Goenka"
+  },
+  "plugins": [
+    {
+      "name": "convotokens",
+      "source": "./",
+      "description": "Real token counts for your current chat, parsed from your own local session transcript. No network calls, no dollar estimates."
+    }
+  ]
+}
