@@ -74,10 +74,22 @@ function renderHtml(result) {
     .join("");
 
   const modelEntries = Object.entries(result.byModel);
-  const modelRows = modelEntries.length > 1
-    ? `<table class="model-table"><thead><tr><th>Model</th><th>Tokens</th></tr></thead><tbody>${
-        modelEntries.map(([m, t]) => `<tr><td>${escapeHtml(m)}</td><td class="num">${fmt(t.total)}</td></tr>`).join("")
+  const modelRows = `<table class="model-table"><thead><tr><th>Model</th><th>Tokens</th></tr></thead><tbody>${
+    modelEntries.map(([m, t]) => `<tr><td>${escapeHtml(m)}</td><td class="num">${fmt(t.total)}</td></tr>`).join("")
+  }</tbody></table>`;
+
+  const subagentRows = result.subagentFileCount > 0
+    ? `<table class="model-table"><thead><tr><th>Source</th><th>Tokens</th></tr></thead><tbody>
+        <tr><td>Main</td><td class="num">${fmt(result.bySource.main.total)}</td></tr>
+        <tr><td>Subagents (${result.subagentFileCount})</td><td class="num">${fmt(result.bySource.subagent.total)}</td></tr>
+      </tbody></table>
+      <table class="model-table"><thead><tr><th>Agent type</th><th>Tokens</th></tr></thead><tbody>${
+        Object.entries(result.byAgentType).map(([a, t]) => `<tr><td>${escapeHtml(a)}</td><td class="num">${fmt(t.total)}</td></tr>`).join("")
       }</tbody></table>`
+    : "";
+
+  const compactRow = result.compact.boundaryCount > 0
+    ? `<div class="muted" style="margin-top:1rem">Since last /compact: ${fmt(result.compact.sinceLastCompact.total)} tokens (${result.compact.boundaryCount} compaction${result.compact.boundaryCount > 1 ? "s" : ""} this transcript)</div>`
     : "";
 
   const warning = result.malformedLines > 0
@@ -128,6 +140,8 @@ function renderHtml(result) {
     <div class="bar">${barSegments}</div>
     <table>${legendRows}</table>
     ${modelRows}
+    ${subagentRows}
+    ${compactRow}
     ${warning}
     <footer>Generated locally from your own transcript. No network calls.${
       result.rawAssistantLines !== result.uniqueAssistantMessages
@@ -192,13 +206,25 @@ async function main() {
   console.log(`  TOTAL:           ${fmt(result.overall.total)}`);
 
   const modelEntries = Object.entries(byModel);
-  if (modelEntries.length > 1) {
-    console.log("\nPer-model breakdown:");
-    for (const [model, t] of modelEntries) {
-      console.log(`  ${model}: ${fmt(t.total)} tokens`);
+  console.log("\nModel(s):");
+  for (const [model, t] of modelEntries) {
+    console.log(`  ${model}: ${fmt(t.total)} tokens`);
+  }
+
+  if (result.subagentFileCount > 0) {
+    console.log(`\nSubagent (Task tool) usage — ${result.subagentFileCount} subagent transcript(s), folded into the total above:`);
+    console.log(`  Main:      ${fmt(result.bySource.main.total)}`);
+    console.log(`  Subagents: ${fmt(result.bySource.subagent.total)}`);
+    for (const [agentType, t] of Object.entries(result.byAgentType)) {
+      console.log(`    ${agentType}: ${fmt(t.total)}`);
     }
   }
 
+  if (result.compact.boundaryCount > 0) {
+    console.log(
+      `\nSince last /compact: ${fmt(result.compact.sinceLastCompact.total)} tokens (${result.compact.boundaryCount} compaction(s) this transcript; lifetime total above includes pre-compact turns)`,
+    );
+  }
 }
 
 main().catch((err) => {

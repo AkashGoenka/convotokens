@@ -40,6 +40,36 @@ against a `jq` group-by-`message.id` sum on a live (still-growing) transcript
 runs. Output now prints "N assistant lines deduped to M unique API turns"
 whenever they differ, so this can't silently regress unnoticed again.
 
+## Subagent spend is folded into the total, broken out by source
+
+Task-tool (subagent) turns don't live inline in the main transcript — Claude
+Code writes them to sidecar files at `<session-dir>/subagents/**/agent-<id>.jsonl`
+(sometimes nested under a `workflows/<id>/` layer), each with a matching
+`agent-<id>.meta.json` carrying `{agentType, description}`. Earlier versions
+of this plugin only read the main `.jsonl`, so subagent spend was 100%
+invisible, not just unattributed.
+
+`compute-usage.mjs` now globs those sidecar files, dedupes them the same way
+as the main transcript, and folds their tokens into the same overall total
+(so "total tokens" means total spend, not just the delegating agent's own
+turns) while still reporting a `main` vs. `subagent` split and a per-`agentType`
+breakdown — both in the CLI table and in the `--json` output's `bySource` /
+`byAgentType` fields.
+
+## Compact-aware totals
+
+`/compact` (manual or automatic) writes a `compact_boundary` system record
+into the transcript with `compactMetadata.postTokens` — Claude Code's own
+count of the context size right after compaction. Since the transcript JSONL
+is append-only, all the pre-compact assistant turns stay in the file and get
+summed forever by a naive scan; a session with many compactions can rack up a
+lifetime total far larger than what's actually in context right now.
+
+When the transcript contains at least one `compact_boundary`, the output adds
+a second line — tokens since the last compact — alongside the lifetime total,
+so both numbers are visible instead of only the (increasingly misleading)
+lifetime one.
+
 ## How it finds your transcript
 
 Claude Code substitutes `${CLAUDE_SESSION_ID}` into a command's bash execution
@@ -65,23 +95,27 @@ unambiguous fallback, not a "most recent file" guess. Whether ordinary CLI/VS
 Code usage (no worktree-switching involved) ever hits this is untested; the
 fallback is cheap enough to keep regardless.
 
-## Known limitation: `/clear` is invisible in the transcript
+## `/clear` rotates to a new transcript, so its "invisible" problem doesn't apply
 
-Confirmed empirically: `/clear` does NOT start a new transcript file (same
-session file continues — Claude Code's own docs confirm the old conversation
-"remains on disk"), but it also leaves **no trace inside the JSONL** — no
-`SessionStart`/`clear` record is written to the file, even though a
-`SessionStart` hook does fire with `source: "clear"` at that moment.
+An earlier version of this README claimed `/clear` keeps writing to the same
+transcript file with no trace of the clear — that was wrong. Re-tested
+empirically: running `/clear` in a live session immediately stopped writes to
+the old file and started a **brand-new transcript with a different session
+UUID**, opening with a no-output `local_command` record consistent with a
+slash command that produces no stdout. The old file never resumed.
 
-**Consequence:** `/convotokens:get-tokens` sums the *entire* transcript file, which is
-"tokens used across this session," not strictly "tokens since your last
-`/clear`." If you've cleared mid-session, the total includes pre-clear turns.
+**Practical upshot:** since `/convotokens:get-tokens` derives its transcript
+path from `${CLAUDE_SESSION_ID}` at command-execution time, a post-clear
+invocation reads the new file, which only contains post-clear turns — the
+"clear inflates the total" problem doesn't actually exist.
 
-**Fix, if precision matters later:** add a `hooks/hooks.json` `SessionStart`
-hook (matcher: `clear`) that stamps `{lineOffset, ts}` to a small state file
-keyed by session id; the command reads from that offset forward. Not built —
-deferred until it's clear (no pun intended) this precision is worth the extra
-hook plumbing.
+**One detail not independently re-verified:** whether `${CLAUDE_SESSION_ID}`
+itself is re-substituted to the new UUID within the same running CLI process
+immediately after `/clear` (only the on-disk file rotation was directly
+observed). If it lagged, `findTranscript()`'s UUID-search fallback would
+still resolve to *some* session file — just possibly the old, now-frozen one
+— rather than erroring outright. Worth a quick live check before calling
+this fully closed, but not blocking.
 
 ## Two ways to see your usage
 
@@ -156,4 +190,3 @@ plugin from it.
   exercise this plugin's core path — do this check in a real interactive
   session before submitting.
 - No automated tests.
-- Codex support (see Scope above) — not started.
