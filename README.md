@@ -4,12 +4,21 @@
 
 ## Install in Codex from GitHub
 
-The repository is packaged as a Codex skills-only plugin. To install it from GitHub:
+The repository is packaged as a Codex skills-only plugin and includes a
+marketplace manifest. Add the GitHub repository as a Codex marketplace, then
+install the plugin:
 
-1. Open Codex and open the Plugins view.
-2. Choose the option to add or install a plugin from a marketplace/repository.
-3. Enter `https://github.com/AkashGoenka/convotokens`.
-4. Install `convotokens` from the repository marketplace.
+```bash
+codex plugin marketplace add https://github.com/AkashGoenka/convotokens.git
+codex plugin add convotokens@convotokens
+```
+
+To inspect the configured marketplace or refresh its Git snapshot:
+
+```bash
+codex plugin marketplace list
+codex plugin marketplace upgrade convotokens
+```
 
 The plugin manifest is [`.codex-plugin/plugin.json`](.codex-plugin/plugin.json), and the Codex workflow is [`skills/convotokens/SKILL.md`](skills/convotokens/SKILL.md). The plugin is skills-only because it reads local transcript files and does not need an MCP server.
 
@@ -39,7 +48,24 @@ Codex `/clear` starts a new session transcript. A lookup by workspace selects th
 
 ## Use with Claude Code
 
-Install or load the repository as a Claude Code plugin:
+Claude Code has the corresponding marketplace flow:
+
+Inside a Claude Code session, run:
+
+```text
+/plugin marketplace add AkashGoenka/convotokens
+/plugin install convotokens@convotokens
+```
+
+The equivalent CLI commands are:
+
+```bash
+claude plugin marketplace add https://github.com/AkashGoenka/convotokens.git
+claude plugin install convotokens@convotokens
+```
+
+For local development without installing from a marketplace, load the checkout
+directly:
 
 ```bash
 claude --plugin-dir /path/to/convotokens
