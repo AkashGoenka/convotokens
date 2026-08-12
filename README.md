@@ -10,9 +10,16 @@ No network calls, no dollar estimates.
 
 Claude Code is supported through the plugin command and status line. Codex is
 supported through `scripts/codex-usage.mjs`, which reads local Codex rollout
-transcripts and their cumulative `token_count` snapshots. Run it from the
-current workspace with `node scripts/codex-usage.mjs --cwd "$PWD"`, or pass
+transcripts and their cumulative `token_count` snapshots. It folds in
+subagent rollout files linked by `parent_thread_id` and reports main vs.
+subagent usage plus an agent-type breakdown. Run it from the current workspace
+with `node scripts/codex-usage.mjs --cwd "$PWD"`, or pass
 `--session <id>` for a specific chat. Use `--json` for machine-readable output.
+
+Codex `/clear` starts a new session transcript. When no `--session` is passed,
+the command selects the newest matching transcript for the workspace, so a
+post-clear invocation reports only the new chat. Pass an explicit session id
+when comparing usage across the pre-clear and post-clear sessions.
 
 ## Fixed bug: naive per-line summing overcounted by ~1.5-2x
 
