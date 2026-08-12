@@ -66,7 +66,6 @@ claude plugin install convotokens@convotokens
 
 For local development without installing from a marketplace, load the checkout
 directly:
-
 ```bash
 claude --plugin-dir /path/to/convotokens
 ```
