@@ -21,6 +21,13 @@ the command selects the newest matching transcript for the workspace, so a
 post-clear invocation reports only the new chat. Pass an explicit session id
 when comparing usage across the pre-clear and post-clear sessions.
 
+## Codex plugin packaging
+
+This repository is also packaged as a Codex skills-only plugin. The required
+manifest is `.codex-plugin/plugin.json`, and the Codex workflow is in
+`skills/convotokens/SKILL.md`. It is skills-only because the implementation
+reads local transcript files and does not require an MCP server.
+
 ## Fixed bug: naive per-line summing overcounted by ~1.5-2x
 
 The first version summed `message.usage` on every `type:"assistant"` JSONL
