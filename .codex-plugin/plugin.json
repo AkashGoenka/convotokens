@@ -1,7 +1,7 @@
 {
   "name": "convotokens",
   "version": "1.0.0",
-  "description": "Inspect local Claude Code and Codex transcripts to report real token usage.",
+  "description": "Inspect local Claude Code and Codex transcripts to report tokens consumed inside a session.",
   "author": {
     "name": "Akash Goenka",
     "url": "https://github.com/AkashGoenka"
@@ -14,14 +14,15 @@
   "interface": {
     "displayName": "Convotokens",
     "shortDescription": "Report local chat token usage",
-    "longDescription": "Read local Claude Code and Codex transcripts and report real token usage, including Codex subagent rollouts and Claude model/source breakdowns. No network calls and no dollar estimates.",
+    "longDescription": "Read local Claude Code and Codex transcripts and report tokens consumed inside a session, including Codex subagent rollouts and Claude model/source breakdowns. No network calls and no dollar estimates.",
     "developerName": "Akash Goenka",
     "category": "Productivity",
     "capabilities": ["Read"],
     "websiteURL": "https://github.com/AkashGoenka/convotokens",
     "defaultPrompt": [
       "Show my Codex token usage for this session.",
-      "Break down this session's usage by main agent and subagents.",
+      "Break down this session's usage and turns by main agent and subagents.",
+      "Show total token usage across this whole project, not just this session.",
       "Explain how the local token usage was calculated."
     ],
     "brandColor": "#2563EB"

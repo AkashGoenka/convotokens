@@ -1,5 +1,5 @@
 ---
-description: Show real token usage for the current chat, parsed from your local transcript
+description: Show tokens consumed inside the current chat, parsed from your local transcript
 allowed-tools: Bash(node:*)
 argument-hint: [--open] [--json]
 ---

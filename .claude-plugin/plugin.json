@@ -2,7 +2,7 @@
   "name": "convotokens",
   "displayName": "convotokens",
   "version": "0.1.0",
-  "description": "Real token counts for your current chat, parsed from your own local session transcript. No network calls, no dollar estimates.",
+  "description": "Tokens consumed inside your current chat, parsed from your own local session transcript. No network calls, no dollar estimates.",
   "author": {
     "name": "Akash Goenka",
     "url": "https://github.com/AkashGoenka"

@@ -53,7 +53,7 @@ async function main() {
   const fmt = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
   const t = result.overall;
   const cacheReadPct = Math.round((t.cache_read_input_tokens / t.total) * 100);
-  const line = `${CYAN}●${RESET} ${fmt(t.total)} tok this session (${cacheReadPct}% cache read)`;
+  const line = `${CYAN}●${RESET} ${fmt(t.total)} tok, ${fmt(t.turns)} turns this session (${cacheReadPct}% cache read)`;
 
   process.stdout.write(line);
 }

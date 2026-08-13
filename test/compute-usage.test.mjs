@@ -31,6 +31,7 @@ test("dedupes assistant lines by message.id", async () => {
     assert.equal(result.rawAssistantLines, 3);
     assert.equal(result.uniqueAssistantMessages, 2);
     assert.equal(result.overall.total, 30); // 2 unique turns * 15 tokens
+    assert.equal(result.overall.turns, 2); // repeated m1 line counts once
   });
 });
 
@@ -61,6 +62,11 @@ test("folds subagent sidecar files into overall total and reports bySource/byAge
     assert.equal(result.bySource.subagent.total, 50);
     assert.equal(result.byAgentType.Explore.total, 20);
     assert.equal(result.byAgentType["general-purpose"].total, 30);
+    assert.equal(result.overall.turns, 3); // 1 main + 2 subagent turns
+    assert.equal(result.bySource.main.turns, 1);
+    assert.equal(result.bySource.subagent.turns, 2);
+    assert.equal(result.byAgentType.Explore.turns, 1);
+    assert.equal(result.byAgentType["general-purpose"].turns, 1);
   });
 });
 
