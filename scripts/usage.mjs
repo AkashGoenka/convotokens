@@ -79,12 +79,12 @@ function renderHtml(result) {
   }</tbody></table>`;
 
   const subagentRows = result.subagentFileCount > 0
-    ? `<table class="model-table"><thead><tr><th>Source</th><th>Tokens</th></tr></thead><tbody>
-        <tr><td>Main</td><td class="num">${fmt(result.bySource.main.total)}</td></tr>
-        <tr><td>Subagents (${result.subagentFileCount})</td><td class="num">${fmt(result.bySource.subagent.total)}</td></tr>
+    ? `<table class="model-table"><thead><tr><th>Source</th><th>Tokens</th><th>Turns</th></tr></thead><tbody>
+        <tr><td>Main</td><td class="num">${fmt(result.bySource.main.total)}</td><td class="num">${fmt(result.bySource.main.turns)}</td></tr>
+        <tr><td>Subagents (${result.subagentFileCount})</td><td class="num">${fmt(result.bySource.subagent.total)}</td><td class="num">${fmt(result.bySource.subagent.turns)}</td></tr>
       </tbody></table>
-      <table class="model-table"><thead><tr><th>Agent type</th><th>Tokens</th></tr></thead><tbody>${
-        Object.entries(result.byAgentType).map(([a, t]) => `<tr><td>${escapeHtml(a)}</td><td class="num">${fmt(t.total)}</td></tr>`).join("")
+      <table class="model-table"><thead><tr><th>Agent type</th><th>Tokens</th><th>Turns</th></tr></thead><tbody>${
+        Object.entries(result.byAgentType).map(([a, t]) => `<tr><td>${escapeHtml(a)}</td><td class="num">${fmt(t.total)}</td><td class="num">${fmt(t.turns)}</td></tr>`).join("")
       }</tbody></table>`
     : "";
 
@@ -136,7 +136,7 @@ function renderHtml(result) {
     <h1>Token consumption — this chat</h1>
     <div class="path">${escapeHtml(result.transcriptPath)}</div>
     <div class="total">${fmt(result.overall.total)}</div>
-    <div class="total-label">total tokens, not billed dollars — Pro/Max is subscription, not per-token</div>
+    <div class="total-label">total tokens across ${fmt(result.overall.turns)} turns — not billed dollars, Pro/Max is subscription, not per-token</div>
     <div class="bar">${barSegments}</div>
     <table>${legendRows}</table>
     ${modelRows}
@@ -204,19 +204,20 @@ async function main() {
   console.log(`  Cache read:      ${fmt(result.overall.cache_read_input_tokens)}`);
   console.log(`  Cache creation:  ${fmt(result.overall.cache_creation_input_tokens)}`);
   console.log(`  TOTAL:           ${fmt(result.overall.total)}`);
+  console.log(`  Turns:           ${fmt(result.overall.turns)}`);
 
   const modelEntries = Object.entries(byModel);
   console.log("\nModel(s):");
   for (const [model, t] of modelEntries) {
-    console.log(`  ${model}: ${fmt(t.total)} tokens`);
+    console.log(`  ${model}: ${fmt(t.total)} tokens, ${fmt(t.turns)} turns`);
   }
 
   if (result.subagentFileCount > 0) {
     console.log(`\nSubagent (Task tool) usage — ${result.subagentFileCount} subagent transcript(s), folded into the total above:`);
-    console.log(`  Main:      ${fmt(result.bySource.main.total)}`);
-    console.log(`  Subagents: ${fmt(result.bySource.subagent.total)}`);
+    console.log(`  Main:      ${fmt(result.bySource.main.total)} tokens, ${fmt(result.bySource.main.turns)} turns`);
+    console.log(`  Subagents: ${fmt(result.bySource.subagent.total)} tokens, ${fmt(result.bySource.subagent.turns)} turns`);
     for (const [agentType, t] of Object.entries(result.byAgentType)) {
-      console.log(`    ${agentType}: ${fmt(t.total)}`);
+      console.log(`    ${agentType}: ${fmt(t.total)} tokens, ${fmt(t.turns)} turns`);
     }
   }
 

@@ -33,14 +33,19 @@ export function findTranscript(cwd, session) {
 }
 
 export function emptyTotals() {
-  return { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 };
+  return { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0, turns: 0 };
 }
 
+// A "turn" is one unique assistant message.id — i.e. one deduped API round-trip.
+// Incrementing it here, alongside the token sums, means every bucket (overall,
+// bySource, byModel, byAgentType, sinceCompact) gets an accurate turn count for
+// free: each bucket is touched exactly once per unique message that feeds it.
 function addUsage(target, usage) {
   target.input_tokens += usage.input_tokens || 0;
   target.output_tokens += usage.output_tokens || 0;
   target.cache_read_input_tokens += usage.cache_read_input_tokens || 0;
   target.cache_creation_input_tokens += usage.cache_creation_input_tokens || 0;
+  target.turns += 1;
 }
 
 export function totalOf(t) {
